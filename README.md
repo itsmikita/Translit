@@ -8,3 +8,8 @@ Shortcuts
 
 `Ctrl+1` - Switch to Translit
 `Ctrl+2` - Switch to Original keyboard
+
+Demo
+----
+
+http://designed.bymikita.com/translit/
