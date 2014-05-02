@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+
+<!--[if lt IE 9 ]><html class="ie" lang="sv"><![endif]-->
+<!--[if (gte IE 9)|!(IE)]><!--><html lang="sv"><!--<![endif]-->
+
+<head>
+	
+	<meta charset="utf-8">
+	
+	<title>write.dev</title>
+	
+	<style type="text/css">
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		
+		html,
+		body,
+		textarea {
+			height: 100%;
+		}
+		
+		textarea {
+			border: none;
+			box-sizing: border-box;
+			color: black;
+			display: block;
+			font: normal 3em/1em 'Clear Sans', sans-serif;
+			outline: none;
+			padding: 1em 14%;
+			width: 100%;
+		}
+		
+		button {
+			background: black;
+			border: none;
+			border-radius: 1.4em;
+			bottom: 10%;
+			box-sizing: border-box;
+			color: white;
+			cursor: pointer;
+			font: normal 1.7em/0.5em 'Clear Sans', sans-serif;
+			margin: 0.2em;
+			opacity: 0;
+			padding: 0.6em 1.2em 0.8em;
+			position: absolute;
+			width: 7em;
+		}
+		button.on {
+			border: 0.2em solid #44AAD6;
+			margin: 0;
+			width: 7.6em;
+		}
+		button.translit {
+			left: calc( 50% - 8em );
+		}
+		button.translit.on {
+			left: calc( 50% - 8.1em );
+		}
+		button.original {
+			right: calc( 50% - 8em );
+		}
+		button.original.on {
+			right: calc( 50% - 8.1em );
+		}
+		
+		#prompt {
+			border-radius: 1.4em;
+			background: black;
+			color: white;
+			font: normal 1.7em/0.5em 'Clear Sans', sans-serif;
+			padding: 0.6em 1.2em 0.8em;
+			position: absolute;
+			
+		}
+	</style>
+	
+	<script src="jquery.js"></script>
+	<!--[if lt IE 9]><script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	
+	<script type="text/javascript">
+		var useTranslit = false,
+			shiftIsDown = false,
+			ctrlIsDown = false,
+			cmdIsDown = false,
+			t;
+		
+		$( function() {
+			/**
+			 * Center plugin
+			 */
+			$.fn.center = function() {
+				var selector = this;
+				
+				$( window ).resize( function() {
+					$( selector ).css( {
+						left: $( window ).width() / 2 - $( selector ).width() / 2 + 'px',
+						top: $( window ).height() / 2 - $( selector ).height() / 2 + 'px',
+					} );
+				} ).trigger( 'resize' );
+			};
+			
+			/**
+			 * Prompt text
+			 *
+			 * @param string text
+			 */
+			function prompt( text ) {
+				function cleanup() {
+					$( '#prompt' ).stop().remove();
+				};
+				
+				if( 'undefined' != typeof t ) {
+					clearTimeout( t );
+					cleanup();
+				}
+				
+				$( 'body' ).append( '<span id="prompt">' + text + '</span>' );
+				
+				$( '#prompt' ).center();
+				
+				t = setTimeout( function() {
+					$( '#prompt' ).fadeOut( 1000, cleanup );
+				}, 1000 );
+			};
+			
+			/**
+			 * What is current keyboard?
+			 * (not used)
+			 */
+			function whatKeyboard() {
+				prompt( 'Keyboard: ' + ( useTranslit ? 'Russian (in Translit)' : 'Original' ) );
+			};
+			
+			/**
+			 * Switch to keyboard
+			 *
+			 * @param int whitch (0 - original, 1 - translit)
+			 */
+			function switchTo( which ) {
+				useTranslit = Boolean( which );
+				
+				$( 'button' ).removeClass( 'on' );
+				$( '[data-keyboard=' + which + ']' ).addClass( 'on' );
+				$( 'title' ).text( $( '[data-keyboard=' + which + ']' ).text() );
+				$( 'textarea' ).attr( 'placeholder', 'Write in: ' + $( '[data-keyboard=' + which + ']' ).text() ).focus();
+			}
+			
+			/**
+			 * Buttons
+			 */
+			$( 'button' ).on( 'click', function( event ) {
+				event.preventDefault();
+				
+				switchTo( $( this ).data( 'keyboard' ) );
+			} );
+			
+			/**
+			 * Opacity
+			 */
+			$( document ).on( 'mousemove', function( event ) {
+				var percent = event.pageY / $( window ).height();
+				
+				$( 'button' ).css( 'opacity', percent );
+			} );
+			
+			/**
+			 * Keys
+			 */
+			$( document ).keydown( function( event ) {
+				switch( event.which ) {
+					// Shift is down
+					case 16:
+						shiftIsDown = true;
+						break;
+					
+					// Alt is down
+					case 17:
+						ctrlIsDown = true;
+						break;
+					
+					// Cmd is down
+					case 91:
+						cmdIsDown = true;
+						break;
+					
+					// Switch keyboard to Original
+					case 50:
+						if( ! ctrlIsDown )
+							return;
+						
+						switchTo( 0 );
+						return;
+						
+						// Old
+						useTranslit = false;
+						$( 'title' ).text( 'original' );
+						whatKeyboard();
+						break;
+					
+					// Switch keyboard to Russian (Translit)
+					case 49:
+						if( ! ctrlIsDown )
+							return;
+						
+						switchTo( 1 );
+						return;
+						
+						// Old
+						useTranslit = true;
+						$( 'title' ).text( 'translit' );
+						whatKeyboard();
+						break;
+				}
+			} ).keyup( function( event ) {
+				switch( event.which ) {
+					// Shift is up
+					case 16: shiftIsDown = false; break;
+					
+					// Ctrl is up
+					case 17: ctrlIsDown = false; break;
+					
+					// Cmd is up
+					case 91: cmdIsDown = false; break;
+				}
+			} );
+			
+			/**
+			 * Yo!
+			 */
+			$( 'textarea' ).focus( function() {
+				// Would it help?
+				$( document ).unbind( 'keypress' );
+				
+				$( document ).keypress( function( event ) {
+					if( ! useTranslit )
+						return;
+					
+					var charCode = event.which || event.keyCode
+						charGroup = String.fromCharCode( charCode );
+					
+					if( cmdIsDown )
+						return;
+					
+					var charMap = {
+							'A':'A', 'a':'а',
+							'B':'Б', 'b':'б',
+							'V':'В', 'v':'в',
+							'G':'Г', 'g':'г',
+							'D':'Д', 'd':'д',
+							'E':'Е', 'e':'е',
+							'ЙO':'Ё', 'Йo':'Ё', 'йO':'Ё', 'йo':'ё', 'Ö': 'Ё', 'ö':'ё',
+							'ЗH':'Ж', 'Зh':'Ж', 'зH':'Ж', 'зh':'ж',
+							'Z':'З', 'z':'з',
+							'I':'И', 'i':'и',
+							'J':'Й', 'j':'й',
+							'K':'К', 'k':'к', 'Q':'К', 'q':'к',
+							'L':'Л', 'l':'л',
+							'M':'М', 'm':'м',
+							'N':'Н', 'n':'н',
+							'O':'О', 'o':'о',
+							'P':'П', 'p':'п',
+							'R':'Р', 'r':'р',
+							'S':'С', 's':'с',
+							'T':'Т', 't':'т',
+							'U':'У', 'u':'у',
+							'F':'Ф', 'f':'ф',
+							'H':'Х', 'h':'х', 'X':'Х', 'x':'х',
+							'C':'Ц', 'c':'ц',
+							'ЦH':'Ч', 'Цh':'Ч', 'цH':'Ч', 'цh':'ч',
+							'СH':'Ш', 'Сh':'Ш', 'сH':'Ш', 'сh':'ш',
+							'W':'Щ', 'w':'щ',
+							"ъ'":'Ъ', "ь'":'ъ',
+							'Y':'Ы', 'y':'ы',
+							"''":'Ь', "'":'ь',
+							'ЙE':'Э', 'Йe':'Э', 'йE':'Э', 'йe':'э', 'Ä':'Э', 'ä':'э',
+							'ЙU':'Ю', 'Йu':'Ю', 'йU':'Ю', 'йu':'ю',
+							'ЙA':'Я', 'Йa':'Я', 'йA':'Я', 'йa':'я',
+							'ЫO':'ЙО', 'Ыo':'Йо', 'ыo':'йо',
+						},
+						textarea = $( 'textarea' )[ 0 ],
+						position = textarea.selectionStart,
+						prepend = textarea.value.substr( 0, position ),
+						append = textarea.value.substr( textarea.selectionEnd, textarea.value.length ),
+						neighbor = prepend.substr( prepend.length - 1, 1 );
+					
+					if( -1 !== $.inArray( neighbor, [ 'З', 'з', 'Й', 'й', 'С', 'с', 'Ц', 'ц', 'Ы', 'ы', 'ь', 'ъ' ] ) ) {
+						if( 'undefined' != typeof charMap[ neighbor + charGroup ] ) {
+							prepend = textarea.value.substr( 0, position - 1 );
+							charGroup = neighbor + charGroup;
+							position = position - 1;
+						}
+					}
+					
+					if( 'undefined' == typeof charMap[ charGroup ] )
+						return;
+					
+					event = event || window.event;
+					event.preventDefault();
+					
+					position = position + charMap[ charGroup ].length;
+					textarea.value = prepend + charMap[ charGroup ] + append;
+					textarea.selectionStart = position;
+					textarea.selectionEnd = position;
+					textarea.focus();
+				} );
+			} ).blur( function() {
+				// I suspect this is the bug
+				//$( document ).unbind( 'keypress' );
+			} );
+			
+			// Default: Translit
+			switchTo( 1 );
+		} );
+	</script>
+	
+</head>
+<body>
+	
+	<button data-keyboard="1" class="translit on">Translit</button>
+	<button data-keyboard="0" class="original">Original</button>
+	
+	<textarea placeholder="Let the word be..."></textarea>
+	
+</body>
+</html>
